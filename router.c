@@ -11,8 +11,9 @@
 #include <sys/stat.h>
 
 /* this defines the size of our buffer */
-#define STORAGE_SIZE 8192
+#define STORAGE_SIZE 4096
 #define PACKET_SIZE 128
+#define TIMEOUT_SEC 15
 
  int main(int argc, char** argv)
  {
@@ -52,6 +53,14 @@
 	if ((listen_fd = socket(AF_INET, SOCK_DGRAM,0)) == -1) {
 	 	printf("[router]\tError: Couldn't make a socket.\n");
 	 	exit(1);
+	}
+	
+	struct timeval timeout;
+	timeout.tv_sec = TIMEOUT_SEC;
+	timeout.tv_usec = 0;
+	
+	if(setsockopt(listen_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout)) < 0) {
+		puts("setsockopt failed\n");
 	}
 
 	/*Prepare router socket*/
@@ -110,18 +119,17 @@
 			usleep(10000);
 			// }
 			if (count_done < 2) {
+				puts("receiving...");
 				char_rec = recvfrom(listen_fd, buffer, PACKET_SIZE, 0, (struct sockaddr *) &sender, (socklen_t *)&sender_len);
 				printf("received packet from sender %c on port %hu\n", buffer[0], ntohs(sender.sin_port));
 				if (char_rec <= 0) {
 					printf("sender %c finished sending.\n", buffer[0]);
 					count_done++;
-				}
-
-				if(buffer[0] == '1') {
+				} else if(buffer[0] == '1' && q1_ptr < STORAGE_SIZE) {
 					memcpy(queue1+q1_ptr, &buffer, char_rec);
 					q1_ptr+=char_rec;
 
-				} else {
+				} else if(q2_ptr < STORAGE_SIZE){
 					memcpy(queue2+q2_ptr, &buffer, char_rec);
 					q2_ptr+=char_rec;
 				}

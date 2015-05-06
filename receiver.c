@@ -71,15 +71,16 @@ int main(int argc, char** argv)
     char buf[4096];
     buflen = 4096;
     int char_rec;
+    int p_rec = 0;
 
     // if (bFlag == 0) {
     while ((char_rec = recvfrom(sd, buf, buflen, 0, NULL, NULL)) > 0) {
         printf("[receiver]\t Received: %s\n", buf);
 		//count+=char_rec;
-	  
+	  	p_rec++;
 		bzero(buf, buflen);
     } 
-
+    printf("total packets received: %i\n\n", p_rec);
     close(sd);
     return 0;
 }
