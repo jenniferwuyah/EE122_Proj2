@@ -38,6 +38,11 @@ int main(int argc, char** argv)
     r = atoi(argv[3]);
     router_address = argv[1];
     sender_id = argv[4];
+
+    if (sender_id[0] == '1') {
+        puts("double r");
+        r = 2*r;
+    }
     
     if(port < 1024) {
         fprintf(stderr, "[sender]\tError: Invalid port number <%d>.\n", port);
@@ -64,7 +69,7 @@ int main(int argc, char** argv)
     printf("\n[sender]\tConnected to router!\n");
     packet_no = 1;
     //for (int i=0; i<10; i++) {
-    while (packet_no <= 9999) { // max of 9999 packets can be sent
+    while (packet_no <= 1000) { // max of 9999 packets can be sent
         packet_delay = (rand() / (double)(RAND_MAX/10))+(r-5);
 
         if (packet_delay > 0) {
