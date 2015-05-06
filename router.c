@@ -23,7 +23,7 @@
 
  	int listen_fd, comm_fd, port, char_rec, sender_len, receiver1_len, receiver2_len;
  	struct sockaddr_in router, sender, receiver1, receiver2;
- 	int q1_ptr, q2_ptr;
+ 	int q1_ptr, q2_ptr, q1_len, q2_len;
  	char buf[7];
  	char buffer[PACKET_SIZE], queue1[STORAGE_SIZE], queue2[STORAGE_SIZE];
 
@@ -107,6 +107,8 @@
 		// printf("\n[router]\tGot a new sender!\n");
 	 	q1_ptr = 0;
 	 	q2_ptr = 0;
+	 	q1_len = 0;
+	 	q2_len = 0;
 		int count_done = 0;
 		bool should_run_q2 = false;
 
@@ -136,6 +138,8 @@
 			}
 			// printf("q1_ptr %i, q1: %s\n", q1_ptr, queue1);
 			// printf("q2_ptr %i, q2: %s\n", q2_ptr, queue2);
+			q1_len += q1_ptr;
+			q2_len += q2_ptr;
 
 			if(q1_ptr != 0) {
 				puts("[router]\tSending to receiver 1.\n");
@@ -149,7 +153,8 @@
 					perror("sendto");
 				}
 
- 			} else if (q2_ptr != 0 && should_run_q2){
+ 			} 
+ 			if (q2_ptr != 0 && should_run_q2){
 				puts("[router]\tSending to receiver 2.\n");
 				memmove(buffer, queue2, PACKET_SIZE);
 				// printf("packet is %s\n", buffer);
@@ -171,6 +176,9 @@
 		char *done = "";
 		sendto(listen_fd, done, strlen(done), 0, (struct sockaddr *) &receiver1, receiver1_len);
 		sendto(listen_fd, done, strlen(done), 0, (struct sockaddr *) &receiver2, receiver2_len);
+		printf("q1 average length: %d\n", q1_len/1000);
+		printf("q2 average length: %d\n", q2_len/1000);
+
 		puts("[router]\tsender left, closing with receiver.");
 	}
 	return 0;
