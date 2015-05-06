@@ -11,20 +11,14 @@
 #define PACKET_SIZE 128
 int main(int argc, char** argv)
 {
-    int sd, buflen, r;
+    int sd, buflen, r, packet_no;
     char *sender_id;
     double packet_delay;
     unsigned short port;
     char *router_address;
-    char all_packets[10][6] = {"00000","11111","22222","33333","44444","55555","66666","77777","88888","99999"};
+    char junk[PACKET_SIZE-6];
     struct sockaddr_in router;
     char packet[PACKET_SIZE];
-    // char time_str[100];
-    // struct timeval start, end, conn_start, conn_end;
-    // float sec_delay;
-    // int bFlag = 0;
-
-    char *temp = "Initial";
 
     if((argc != 5) || !strcmp(argv[1], "-h")) {
         /* incorrect number of arguments given or help flag given.
@@ -63,46 +57,36 @@ int main(int argc, char** argv)
 
     /* Connecting to the router */
 
-    //setup for delay timing
-    int first_pkt = 1;
-    int count =0;
-    int n =0;
-
     //Talk to router to begin. 
 
-    // if (sendto(sd, temp, strlen(temp) , 0, (struct sockaddr *) &router, sizeof(router)) == -1) {
-    //     fprintf(stderr, "[sender]\tError: Couldn't send to the router.");
-    //     close(sd);
-    //     exit(1);
-    // }
+    memset(junk, '5', PACKET_SIZE-6);
 
-	printf("\n[sender]\tConnected to router!\n");
-
+    printf("\n[sender]\tConnected to router!\n");
+    packet_no = 1;
     for (int i=0; i<10; i++) {
-	//while (1) { // send 10 packets total
-		packet_delay = (rand() / (double)(RAND_MAX/r)) ;
+    //while (packet_no <= 9999) { // max of 9999 packets can be sent
+        packet_delay = (rand() / (double)(RAND_MAX/10))+(r-5);
 
-		if (packet_delay > 0) {
-			usleep((int)(packet_delay * 1000000));
-		}
+        if (packet_delay > 0) {
+            usleep((int)(packet_delay * 100000));
+        }
 
-        strcpy(packet, sender_id);
-        strcat(packet, all_packets[i]);
+        sprintf(packet, "%s%04d%s", sender_id, packet_no, junk);
 
-		if (sendto(sd, packet, PACKET_SIZE, 0, (struct sockaddr *) &router, sizeof(router)) < 0) {
-			printf("[sender]\tError: Failed sending packet.\n");
-			perror("sendto");
-		}
+        if (sendto(sd, packet, PACKET_SIZE, 0, (struct sockaddr *) &router, sizeof(router)) < 0) {
+            printf("[sender]\tError: Failed sending packet.\n");
+            perror("sendto");
+        }
+        packet_no++;
+        /* delay */
+        printf("[sender]\tdelay for %f ms\n", packet_delay);    
+        
+    }
 
-		/* delay */
-		printf("[sender]\tdelay for %f sec\n", packet_delay);	
-		
-	}
+    /*Send last empty packet for connectless to finish*/
+    char *done = "";
+    sendto(sd, done, strlen(done), 0, (struct sockaddr *) &router, sizeof(router)); 
 
-	/*Send last empty packet for connectless to finish*/
-	char *done = "";
-	sendto(sd, done, strlen(done), 0, (struct sockaddr *) &router, sizeof(router));	
-
-	puts("[sender]\tFinish sending packets.");
-	return 0;
+    puts("[sender]\tFinish sending packets.");
+    return 0;
 }
